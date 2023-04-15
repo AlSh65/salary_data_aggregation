@@ -7,7 +7,7 @@ from bot.utils.messages import  message_answer_exception
 async def response_data(message: types.Message):
     try:
         user_data = json.loads(message.text)
-        response = get_aggregated_data(user_data)
-        await message.answer(response)
+        response = await get_aggregated_data(user_data)
+        await message.answer(json.dumps(response))
     except Exception:
         await message.answer(message_answer_exception)

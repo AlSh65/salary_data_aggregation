@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from bot.database.database import connect_to_database
 
 
-def create_query(dt_from, dt_upto):
+async def create_query(dt_from, dt_upto):
     query = {
         "dt": {
             "$gte": dt_from,
@@ -12,7 +12,7 @@ def create_query(dt_from, dt_upto):
     return query
 
 
-def create_group_field(group_type):
+async def create_group_field(group_type):
     if group_type == "month":
         group_field = {"$month": "$dt"}
     elif group_type == "day":
@@ -22,7 +22,7 @@ def create_group_field(group_type):
     return group_field
 
 
-def aggregate_data(sample_collection, query, group_field):
+async def aggregate_data(sample_collection, query, group_field):
     pipeline = [
         {"$match": query},
         {"$addFields": {"date": {"$dateToString": {"format": "%Y-%m-%dT%H:%M:%S.%LZ", "date": "$dt"}}}},
@@ -34,11 +34,11 @@ def aggregate_data(sample_collection, query, group_field):
         {"$sort": {"_id": 1}}
     ]
 
-    aggregated_data = list(sample_collection.aggregate(pipeline))
+    aggregated_data = await sample_collection.aggregate(pipeline).to_list(None)
     return aggregated_data
 
 
-def create_labels_and_dataset(aggregated_data, group_type, dt_from, dt_upto):
+async def create_labels_and_dataset(aggregated_data, group_type, dt_from, dt_upto):
     labels = []
     dataset = []
 
@@ -82,17 +82,16 @@ def create_labels_and_dataset(aggregated_data, group_type, dt_from, dt_upto):
     return labels, dataset
 
 
-def get_aggregated_data(user_data):
-    sample_collection = connect_to_database()
+async def get_aggregated_data(user_data):
+    sample_collection = await connect_to_database()
     dt_from = datetime.fromisoformat(user_data["dt_from"])
     dt_upto = datetime.fromisoformat(user_data["dt_upto"])
 
-    query = create_query(dt_from, dt_upto)
-    group_field = create_group_field(user_data["group_type"])
-    aggregated_data = aggregate_data(sample_collection, query, group_field)
+    query = await create_query(dt_from, dt_upto)
+    group_field = await create_group_field(user_data["group_type"])
+    aggregated_data = await aggregate_data(sample_collection, query, group_field)
 
-    labels, dataset = create_labels_and_dataset(aggregated_data, user_data["group_type"], dt_from, dt_upto)
+    labels, dataset = await create_labels_and_dataset(aggregated_data, user_data["group_type"], dt_from, dt_upto)
 
     response = {"dataset": dataset, "labels": labels}
-
     return response
