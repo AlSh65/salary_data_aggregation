@@ -1,0 +1,23 @@
+services:
+  bot:
+    build: .
+    depends_on:
+      - mongo
+    environment:
+      - LOCAL_DATABASE=mongodb://mongo:27017/
+
+
+  mongoimport:
+    image: mongo
+    container_name: mongo_import
+    volumes:
+      - ./bot/database/static_collection/sample_collection.bson:/data/sample_collection.bson
+      - ./bot/database/static_collection/sample_collection.metadata.json:/data/sample_collection.metadata.json
+    command: mongorestore --host mongo --port 27017 --db aggregation /data
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    container_name: "mongo"
+    ports:
+      - "27017:27017"
