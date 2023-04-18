@@ -1,8 +1,7 @@
 import json
 from aiogram import types
-from bot.loader import dp
 from bot.services.query_handler import get_aggregated_data
-from bot.utils.messages import  message_answer_exception
+from bot.messages import  message_answer_exception
 
 async def response_data(message: types.Message):
     try:
@@ -11,3 +10,4 @@ async def response_data(message: types.Message):
         await message.answer(json.dumps(response))
     except Exception:
         await message.answer(message_answer_exception)
+
